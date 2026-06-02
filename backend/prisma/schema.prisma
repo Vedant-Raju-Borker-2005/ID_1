@@ -1,0 +1,129 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id                String            @id @default(uuid())
+  email             String            @unique
+  passwordHash      String
+  name              String?
+  avatarUrl         String?
+  verificationToken String?           @unique
+  isVerified        Boolean           @default(false)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  workspaces        WorkspaceMember[]
+  activityLogs      ActivityLog[]
+  assignedResources Resource[]
+  refreshTokens     RefreshToken[]
+  notifications     Notification[]
+  ownedWorkspaces   Workspace[]
+}
+
+model Workspace {
+  id           String            @id @default(uuid())
+  name         String
+  slug         String            @unique
+  plan         String            @default("FREE")
+  ownerId      String
+  owner        User              @relation(fields: [ownerId], references: [id])
+  members      WorkspaceMember[]
+  resources    Resource[]
+  automations  AutomationRule[]
+  integrations Integration[]
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+}
+
+model WorkspaceMember {
+  id          String    @id @default(uuid())
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  role        String    @default("MEMBER") // OWNER, ADMIN, MEMBER, VIEWER
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([workspaceId, userId])
+}
+
+model Resource {
+  id          String    @id @default(uuid())
+  type        String    // task, document, issue, etc.
+  title       String
+  content     String?
+  status      String
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  assigneeId  String?
+  assignee    User?     @relation(fields: [assigneeId], references: [id])
+  dueDate     DateTime?
+  createdAt   DateTime  @default(now())
+}
+
+model AutomationRule {
+  id          String    @id @default(uuid())
+  name        String
+  trigger     String    @db.VarChar(50) // 'status_changed', 'date_based', 'cron'
+  conditions  Json?
+  actions     Json
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  enabled     Boolean   @default(true)
+}
+
+model Integration {
+  id          String    @id @default(uuid())
+  type        String    // 'slack', 'jira', 'github'
+  credentials Json
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+}
+
+model ActivityLog {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  action       String
+  resourceType String
+  resourceId   String
+  metadata     Json?
+  createdAt    DateTime @default(now())
+}
+
+model AIUsage {
+  id          String   @id @default(uuid())
+  workspaceId String
+  feature     String   // 'writing', 'chat', 'summarize'
+  tokensUsed  Int
+  cost        Decimal
+  createdAt   DateTime @default(now())
+}
+
+model RefreshToken {
+  id                String   @id @default(uuid())
+  token             String   @unique
+  userId            String
+  user              User     @relation(fields: [userId], references: [id])
+  deviceFingerprint String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  title     String
+  message   String
+  type      String   @default("info") // info, warning, error, success
+  read      Boolean  @default(false)
+  actionUrl String?
+  createdAt DateTime @default(now())
+}
