@@ -19,10 +19,11 @@ This repository contains the complete structural monolith implementation for a p
 ```text
 ├── backend/
 │   ├── prisma/
-│   │   ├── schema.prisma                  # Prisma ORM Database Models
+│   │   ├── schema.prisma                  # Prisma ORM Database Models (User, Workspace, Project, Team, etc.)
 │   │   ├── seed.ts                        # Seed script for initial workspaces and mock tasks
 │   │   └── migrations/
-│   │       └── 20240521000000_vendor_module/ # Custom SQL for vendor schema additions
+│   │       ├── 20240521000000_vendor_module/ # Custom SQL for vendor schema additions
+│   │       └── 20240515_project_team_module/  # Database migration for Project Team Module [NEW]
 │   ├── src/
 │   │   ├── app/
 │   │   │   └── api/
@@ -47,44 +48,66 @@ This repository contains the complete structural monolith implementation for a p
 │   │   │   └── workspaceRepository.ts     # Workspace DB access wrapper
 │   │   └── types/
 │   │       └── auth.ts                    # Token payloads and interfaces
-│   └── app/                               # VENDOR EXTENSION MODULE (App Router backend folder)
-│       ├── api/vendor/
-│       │   ├── onboarding/route.ts        # Vendor registration & files uploader
-│       │   ├── dashboard/route.ts         # KPI metrics API
-│       │   ├── products/route.ts          # Catalog products addition
-│       │   ├── assignments/[id]/route.ts  # Task status update handler
+│   └── app/                               # VENDOR & TEAM EXTENSION MODULES
+│       ├── api/
+│       │   ├── vendor/                    # Vendor Module Route Handlers
+│       │   │   ├── onboarding/route.ts    # Vendor registration & files uploader
+│       │   │   ├── dashboard/route.ts     # KPI metrics API
+│       │   │   ├── products/route.ts      # Catalog products addition
+│       │   │   └── assignments/[id]/route.ts # Task status update handler
+│       │   ├── projects/[id]/             # Project Team Module API routes [NEW]
+│       │   │   ├── team/route.ts          # GET team members lists
+│       │   │   ├── assign/route.ts        # POST team assignment (Manager only)
+│       │   │   ├── progress/route.ts      # GET/POST completion percentages
+│       │   │   ├── issues/route.ts        # GET/POST logged execution issues
+│       │   │   └── photos/route.ts        # GET/POST proof of installation photos
 │       │   └── webhooks/stripe.ts         # Stripe payment success log webhook
 │       ├── middleware/
 │       │   └── vendorGuard.ts             # REST guard for APPROVED vendors
+│       ├── models/
+│       │   └── projectTeamModel.ts        # Repository query layer for project teams [NEW]
+│       ├── routers/
+│       │   └── projectTeamRouter.ts       # Express router fallback wrapper [NEW]
 │       ├── schemas/vendor/
 │       │   └── onboarding.ts              # Zod validation models
-│       └── services/vendor/
-│           └── vendorService.ts           # Core vendor logic & KPIs aggregator
+│       ├── services/
+│       │   ├── vendor/
+│       │   │   └── vendorService.ts       # Core vendor logic & KPIs aggregator
+│       │   └── assignmentService.ts       # Team assignment guards & progress calculator [NEW]
+│       └── utils/
+│           └── authMiddleware.ts          # Role permission mapping guards [NEW]
 │
 ├── frontend/
 │   └── src/
 │       ├── app/
-│       │   └── vendor/                    # VENDOR FRONTEND PAGES
-│       │       ├── layout.tsx             # Sidebar layout
-│       │       ├── dashboard/page.tsx     # KPI metrics charts page
-│       │       ├── onboarding/page.tsx    # Document stepper page
-│       │       └── assignments/page.tsx   # Assigned items list page
+│       │   ├── vendor/                    # VENDOR FRONTEND PAGES
+│       │   │   ├── layout.tsx             # Sidebar layout
+│       │   │   ├── dashboard/page.tsx     # KPI metrics charts page
+│       │   │   ├── onboarding/page.tsx    # Document stepper page
+│       │   │   └── assignments/page.tsx   # Assigned items list page
+│       │   └── projects/[id]/             # PROJECT TEAM FRONTEND PAGES [NEW]
+│       │       ├── team/page.tsx          # Team members directory & assignments builder
+│       │       └── execution/page.tsx     # Construction milestone boards, photos, and Gantt charts
 │       ├── components/
 │       │   ├── AI/                        # AIAssistant.tsx, AIChat.tsx panel bubble layouts
 │       │   ├── Automation/                # AutomationBuilder.tsx, RuleList.tsx wizards
 │       │   ├── Notifications/             # NotificationCenter.tsx drawer
 │       │   ├── Workspace/                 # WorkspaceSwitcher.tsx switcher
 │       │   ├── Views/                     # ListView, BoardView, CalendarView, TimelineView, ChartView
-│       │   └── vendor/                    # KpiCard, ProjectChart, OnboardingWizard, VendorAssignmentTable
+│       │   └── vendor/                    # Reusable elements (KpiCard, ProjectChart, VendorAssignmentTable, etc.)
+│       │       ├── ExecutionProgressBar.tsx # Styled milestones completion component [NEW]
+│       │       └── IssueTracker.tsx       # Collapsible issues submit form & feed component [NEW]
 │       ├── hooks/
 │       │   └── vendor/
 │       │       └── useVendorAssignments.ts# Assignment synchronizer hook
+│       ├── utils/
+│       │   ├── api/
+│       │   │   └── client.ts              # Global apiClient helper for GET/POST [NEW]
+│       │   └── authMiddleware.ts          # UI page permissions scope checker [NEW]
 │       └── stores/
 │           ├── aiStore.ts                 # Chat queue states
 │           ├── notificationStore.ts       # Client alerts array state
 │           ├── workspaceStore.ts          # Active workspace toggler
-│           └── vendorStore.ts             # Onboarding & product states
-│
 ├── package.json                           # Workspace dependency list
 ├── tailwind.config.js                     # Extended colors for AI/Automation dashboards
 └── next.config.js                         # Next.js configurations
