@@ -29,3 +29,10 @@ yarn-error.log*
 # OS files
 .DS_Store
 Thumbs.db
+
+# Runtime / Symlink Cache
+.gemini/
+/src/
+/frontend/src/app/api/
+
+

@@ -8,22 +8,29 @@ generator client {
 }
 
 model User {
-  id                String            @id @default(uuid())
-  email             String            @unique
-  passwordHash      String
-  name              String?
-  avatarUrl         String?
-  verificationToken String?           @unique
-  isVerified        Boolean           @default(false)
-  createdAt         DateTime          @default(now())
-  updatedAt         DateTime          @updatedAt
-  workspaces        WorkspaceMember[]
-  activityLogs      ActivityLog[]
-  assignedResources Resource[]
-  refreshTokens     RefreshToken[]
-  notifications     Notification[]
-  ownedWorkspaces   Workspace[]
-  vendor            Vendor?
+  id                 String            @id @default(uuid())
+  email              String            @unique
+  passwordHash       String
+  name               String?
+  avatarUrl          String?
+  verificationToken  String?           @unique
+  isVerified         Boolean           @default(false)
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  workspaces         WorkspaceMember[]
+  activityLogs       ActivityLog[]
+  assignedResources  Resource[]
+  refreshTokens      RefreshToken[]
+  notifications      Notification[]
+  ownedWorkspaces    Workspace[]
+  vendor             Vendor?
+  teamMembers        ProjectTeamMember[]
+  projectAssignments ProjectAssignment[] @relation("AssignmentAssignee")
+  createdAssignments ProjectAssignment[] @relation("AssignmentCreator")
+  assignedTasks      Task[]              @relation("TaskAssignee")
+  createdTasks       Task[]              @relation("TaskCreator")
+  executionIssues    ExecutionIssue[]
+  siteVisits         SiteVisit[]
 }
 
 model Workspace {
@@ -132,13 +139,25 @@ model Notification {
 }
 
 model Project {
-  id          String   @id @default(uuid())
-  name        String
-  workspaceId String
-  workspace   Workspace @relation(fields: [workspaceId], references: [id])
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  assignments VendorAssignment[]
+  id                 String   @id @default(uuid())
+  name               String
+  workspaceId        String
+  workspace          Workspace @relation(fields: [workspaceId], references: [id])
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  assignments        VendorAssignment[]
+  teamMembers        ProjectTeamMember[]
+  projectAssignments ProjectAssignment[]
+  photos             ExecutionPhoto[]
+  issues             ExecutionIssue[]
+  itemTrackings      ProjectItemTracking[]
+  progressHistory    ProjectProgressHistory[]
+  tasks              Task[]
+  dailyChecklists    DailyChecklist[]
+  siteVisits         SiteVisit[]
+  delays             ProjectDelay[]
+  commsLogs          CommunicationLog[]
+  documents          ProjectDocument[]
 }
 
 model Vendor {
@@ -336,4 +355,273 @@ model VendorPerformance {
   vendor          Vendor   @relation(fields: [vendorId], references: [id])
   
   @@map("vendor_performance")
+}
+
+// --- NEW: PROJECT TEAM MODULE MODELS ---
+
+model ProjectTeamMember {
+  id              String      @id @default(cuid())
+  projectId       String
+  userId          String
+  role            TeamRole    // Manager, Coordinator, Technician
+  status          MemberStatus // Active, OnLeave, Removed
+  assignedAt      DateTime    @default(now())
+  
+  project         Project     @relation(fields: [projectId], references: [id])
+  user            User        @relation(fields: [userId], references: [id])
+
+  @@unique([projectId, userId])
+  @@index([projectId, role])
+}
+
+enum TeamRole {
+  MANAGER
+  COORDINATOR
+  TECHNICIAN
+}
+
+enum MemberStatus {
+  ACTIVE
+  ON_LEAVE
+  REMOVED
+}
+
+model ProjectAssignment {
+  id            String      @id @default(cuid())
+  projectId     String
+  assigneeId    String      // User ID of Coordinator/Technician
+  assignedById  String      // User ID of Manager/Admin
+  role          TeamRole
+  targetItemId  String?     // Specific item within project if assigned to task
+  assignedAt    DateTime    @default(now())
+  
+  project       Project     @relation(fields: [projectId], references: [id])
+  assignee      User        @relation("AssignmentAssignee", fields: [assigneeId], references: [id])
+  creator       User        @relation("AssignmentCreator", fields: [assignedById], references: [id])
+
+  @@index([projectId, role])
+}
+
+model ExecutionPhoto {
+  id            String   @id @default(cuid())
+  projectId     String
+  roomName      String?  // Optional context for photo
+  category      PhotoCategory // SiteVisit, ProductionCheck, Delivery, Installation, FinalHandover
+  imageUrl      String
+  uploadedBy    String
+  createdAt     DateTime @default(now())
+
+  project       Project  @relation(fields: [projectId], references: [id])
+
+  @@index([projectId, category])
+}
+
+enum PhotoCategory {
+  SITE_VISIT
+  PRODUCTION_CHECK
+  DELIVERY
+  INSTALLATION
+  FINAL_HANDOVER
+}
+
+model ExecutionIssue {
+  id            String   @id @default(cuid())
+  projectId     String
+  itemId        String?  // Optional link to specific item
+  type          IssueType
+  priority      Priority
+  status        IssueStatus
+  description   String
+  resolution    String?
+  resolvedAt    DateTime?
+  createdById   String
+
+  project       Project  @relation(fields: [projectId], references: [id])
+  createdBy     User     @relation(fields: [createdById], references: [id])
+
+  @@index([projectId, status])
+}
+
+enum IssueType {
+  VENDOR_DELAY
+  DAMAGED_PRODUCT
+  WRONG_PRODUCT
+  MISSING_ITEM
+  INSTALLATION_PROBLEM
+  CUSTOMER_COMPLAINT
+  OTHER
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum IssueStatus {
+  OPEN
+  ASSIGNED
+  IN_PROGRESS
+  ESCALATED
+  RESOLVED
+  CLOSED
+}
+
+model ProjectItemTracking {
+  id            String   @id @default(cuid())
+  projectId     String
+  itemSerialId  String?  // Link to specific SKU/Order Item
+  currentStatus ItemStatus
+  expectedDate  DateTime?
+  actualDate    DateTime?
+  updatedBy     String
+  
+  project       Project  @relation(fields: [projectId], references: [id])
+
+  @@index([itemSerialId, projectId])
+}
+
+enum ItemStatus {
+  ORDERED
+  PRODUCTION
+  READY
+  DISPATCHED
+  DELIVERED
+  INSTALLED
+}
+
+model ProjectProgressHistory {
+  id            String   @id @default(cuid())
+  projectId     String
+  progress      Float    // 0.0 to 100.0
+  reason        String?  // e.g., "Delivery Completed"
+  recordedAt    DateTime @default(now())
+
+  project       Project  @relation(fields: [projectId], references: [id])
+
+  @@index([projectId, recordedAt])
+}
+
+model Task {
+  id            String   @id @default(cuid())
+  projectId     String
+  title         String
+  description   String?
+  assignedTo    String?  // User ID (Technician/Coordinator)
+  assignedBy    String
+  dueDate       DateTime
+  priority      Priority
+  status        TaskStatus
+  
+  project       Project  @relation(fields: [projectId], references: [id])
+  assignee      User?    @relation("TaskAssignee", fields: [assignedTo], references: [id])
+  creator       User     @relation("TaskCreator", fields: [assignedBy], references: [id])
+
+  @@index([assignedTo, status])
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+model DailyChecklist {
+  id            String   @id @default(cuid())
+  projectId     String
+  checklistType ChecklistType // CoordinatorCheck, TechnicianCheck
+  items         Json     // Array of { title, checked }
+  completedBy   String?
+  createdAt     DateTime @default(now())
+
+  project       Project  @relation(fields: [projectId], references: [id])
+}
+
+enum ChecklistType {
+  COORDINATOR_CHECK
+  TECHNICIAN_CHECK
+}
+
+model SiteVisit {
+  id            String    @id @default(cuid())
+  projectId     String
+  visitDate     DateTime
+  assignedTo    String?   // User ID
+  notes         String?
+  outcome       String?
+  status        VisitStatus
+  
+  project       Project   @relation(fields: [projectId], references: [id])
+  assignee      User?     @relation(fields: [assignedTo], references: [id])
+
+  @@index([visitDate, status])
+}
+
+enum VisitStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+model ProjectDelay {
+  id            String    @id @default(cuid())
+  projectId     String
+  reason        String
+  severity      Severity  // Low, Medium, High
+  detectedAt    DateTime  @default(now())
+  resolvedAt    DateTime?
+
+  project       Project   @relation(fields: [projectId], references: [id])
+
+  @@index([severity, projectId])
+}
+
+enum Severity {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+model CommunicationLog {
+  id            String   @id @default(cuid())
+  projectId     String
+  type          CommsType // Call, Email, WhatsApp, Meeting
+  notes         String
+  createdBy     String
+  timestamp     DateTime @default(now())
+
+  project       Project  @relation(fields: [projectId], references: [id])
+
+  @@index([projectId, timestamp])
+}
+
+enum CommsType {
+  CALL
+  EMAIL
+  WHATSAPP
+  MEETING
+}
+
+model ProjectDocument {
+  id            String   @id @default(cuid())
+  projectId     String
+  title         String
+  type          DocType  // Quotation, Invoice, FloorPlan, SiteReport, Certificate
+  url           String
+  version       Int      @default(1)
+  
+  project       Project  @relation(fields: [projectId], references: [id])
+
+  @@index([projectId, type])
+}
+
+enum DocType {
+  QUOTATION
+  INVOICE
+  FLOOR_PLAN
+  SITE_REPORT
+  COMPLETION_CERTIFICATE
 }
