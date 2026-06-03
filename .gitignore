@@ -34,5 +34,9 @@ Thumbs.db
 .gemini/
 /src/
 /frontend/src/app/api/
+/implementation_plan.md
+/task.md
+/walkthrough.md
+
 
 
