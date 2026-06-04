@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import projectTeamRepo from '../../../../models/projectTeamModel';
-import { validateAssignmentPermissions } from '../../../../services/assignmentService';
-import { verifyAuth } from '../../../../../src/middleware/authMiddleware';
+import projectTeamRepo from '@/app/models/projectTeamModel';
+import { validateAssignmentPermissions } from '@/app/services/assignmentService';
+import { verifyAuth } from '@/middleware/authMiddleware';
 
 export async function POST(
   req: NextRequest,

@@ -1,4 +1,4 @@
-import { prisma } from '../../src/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import { ItemStatus } from '@prisma/client';
 
 export async function validateAssignmentPermissions(userId: string, projectId: string) {

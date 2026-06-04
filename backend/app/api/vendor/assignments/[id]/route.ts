@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { VendorService } from "../../../../services/vendor/vendorService";
-import { verifyAuth } from "../../../../../src/middleware/authMiddleware";
-import { prisma } from "../../../../../src/lib/prisma";
+import { VendorService } from "@/app/services/vendor/vendorService";
+import { verifyAuth } from "@/middleware/authMiddleware";
+import { prisma } from "@/lib/prisma";
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   try {

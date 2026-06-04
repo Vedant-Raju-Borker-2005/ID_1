@@ -1,137 +1,185 @@
-# AI-Based Modular Interior Design & Visualization Platform (SaaS)
+# 🏠 InteriorAI Platform (Part 2 - Extended Edition)
 
-This repository contains the complete structural monolith implementation for a premium SaaS application designed for interior designers, clients, and vendor partners.
+> **AI-Based Modular Interior Design & Visualization Platform**
 
----
+InteriorAI is a comprehensive, premium SaaS application designed to simplify the interior design journey for homeowners, execution teams, administrators, and vendor partners. By combining interactive 3D rendering, AI-powered photorealistic visualizations, real-time pricing updates, and verified contractor matching, the platform takes you from a blank BHK layout to a professional quotation and ready-to-execute design in under 10 minutes.
 
-## 🛠️ Technology Stack
-- **Frontend Framework**: Next.js 14 (App Router), React, TypeScript
-- **Styling**: TailwindCSS & Custom Modern CSS Elements (glassmorphic nav bars, harmonised dynamic animations)
-- **State Management**: Zustand (persisted stores for workspaces, notifications, and AI histories)
-- **Database Engine**: Prisma ORM with PostgreSQL dialect configuration
-- **Background Actions**: BullMQ queue runner integration
-- **Third-Party Integrations**: Stripe Billing API, OpenAI Node client, Redis Cache
+This version (Part 2) extends the core platform with a robust **Vendor Portal**, a collaborative **Project Team Portal**, and high-fidelity **Landing Page Animations**.
 
 ---
 
-## 📂 Project Architecture
+## 🚀 Key Features
+
+*   **Interactive 3D Room Canvas**  
+    Powered by **Three.js** and **React Three Fiber (R3F)**. Live 3D environment to customize walls, flooring, and adjust furniture arrangements (sofas, beds, wardrobes, kitchen counters, vanity units) in real time.
+*   **AI Photorealistic Rendering**  
+    Simulated **Stable Diffusion XL + ControlNet** rendering pipeline. Generate stunning, high-resolution photorealistic renders of your customized rooms under various interior styles (Modern, Scandinavian, Art-Deco, Luxury, Mediterranean, Tropical) in less than 15 seconds.
+*   **Smart AI Recommendation Engine**  
+    Scores and ranks catalog items and furniture packages using dynamic style compatibility matrices and budget-fitting algorithms to present the most cost-effective and aesthetic choices for your home.
+*   **Real-Time Pricing & Dynamic Budgeting**  
+    Every furniture addition, finish change, or room size modification instantly updates your total cost. Maintain granular control over your budget with zero price surprises.
+*   **ReportLab PDF Quotation Generator**  
+    Dynamically generates professional, bank-compliant PDF quotes with detailed room-by-room line items, GST breakdown, terms and conditions, and customized styling.
+*   **Milestone & Contractor Tracker**  
+    Assign projects to KYC-verified local contractors based on geo-matching (pincodes) and rating systems, then track project milestones (Demolition, Electrical, False Ceiling, Woodwork, Painting) with photo updates.
+*   **Premium Visual Showcase & Animations [NEW]**  
+    An immersive user experience consisting of:
+    *   *Hero Carousel*: Auto-playing slideshow showcasing gorgeous interior visuals.
+    *   *Before/After Slider*: Interactive split-screen drag slider allowing users to compare blank spaces against AI-designed renders.
+    *   *Bento Gallery*: Asymmetric style catalog showing design styles with responsive hover scaling.
+*   **Vendor Portal & Onboarding [NEW]**  
+    A dedicated dashboard for contractors and material suppliers:
+    *   *KYC Wizard*: Multi-step onboarding to capture company details, GST records, categories, and serviceable pincodes.
+    *   *KPI Dashboard*: Real-time analytics charts monitoring active tasks, reviews, rating cards, and total earnings.
+    *   *Purchase Orders & Assignments*: Tracking panel showing assigned modular fabrications and on-site works.
+*   **Project Team Portal [NEW]**  
+    A workspace for design firms, project managers, and technicians:
+    *   *Workforce Assignment Directory*: Oversee managers, coordinators, and technicians assigned to each project.
+    *   *Site Execution Center*: Real-time checklists, logged construction delays, issue ticket boards (wrong products, vendor delays, installation issues), and progress histories.
+*   **Admin Dashboard [NEW]**  
+    System control panel for managing active projects, updating contractor allocations, validating customer service requests, and managing platform metrics.
+
+---
+
+## 🛠️ Tech Stack
+
+### Frontend (Next-Gen Web Interface)
+*   **Framework:** Next.js 14 (App Router) & React 18
+*   **Language:** TypeScript
+*   **Styling:** TailwindCSS & Framer Motion (for smooth micro-animations)
+*   **3D Graphics:** Three.js, `@react-three/fiber`, `@react-three/drei`
+*   **State Management:** Zustand (persisted state synchronization)
+*   **Data Fetching:** SWR (Stale-While-Revalidate) & Axios
+
+### Backend (Robust RESTful API)
+*   **Framework:** FastAPI (Python 3.10+)
+*   **Server:** Uvicorn (ASGI)
+*   **Database ORM:** SQLAlchemy (SQLite database by default: `interior_ai.db`)
+*   **Data Validation:** Pydantic v2
+*   **Authentication:** JWT (JSON Web Tokens) via `python-jose` & `passlib` (Bcrypt)
+*   **PDF Generation:** ReportLab PDF library
+*   **Image Processing:** Pillow
+
+---
+
+## 📁 Project Directory Structure
 
 ```text
-├── backend/
-│   ├── prisma/
-│   │   ├── schema.prisma                  # Prisma ORM Database Models (User, Workspace, Project, Team, etc.)
-│   │   ├── seed.ts                        # Seed script for initial workspaces and mock tasks
-│   │   └── migrations/
-│   │       ├── 20240521000000_vendor_module/ # Custom SQL for vendor schema additions
-│   │       └── 20240515_project_team_module/  # Database migration for Project Team Module [NEW]
-│   ├── src/
-│   │   ├── app/
-│   │   │   └── api/
-│   │   │       ├── ai/chat/route.ts       # AI assistant conversation endpoint
-│   │   │       └── notifications/route.ts  # Notifications GET/PATCH endpoint
-│   │   ├── lib/
-│   │   │   ├── aiProvider.ts              # OpenAI SDK Client Configuration
-│   │   │   ├── audit.ts                   # Immutable Activity Logger
-│   │   │   ├── prisma.ts                  # Shared Prisma client wrapper
-│   │   │   ├── redis.ts                   # Cache connector
-│   │   │   ├── storage.ts                 # Mock S3 file uploader
-│   │   │   └── stripe.ts                  # Stripe payment and portal generator
-│   │   ├── middleware/
-│   │   │   └── authMiddleware.ts          # JWT verifier & workspace header scope guard
-│   │   ├── services/
-│   │   │   ├── auth/                      # Register, Login, Token rotation services
-│   │   │   ├── ai/                        # OpenAI GPT-4 text generator
-│   │   │   ├── automation/                # Condition evaluation trigger engine
-│   │   │   ├── notification/              # Real-time WebSocket/Email dispatches
-│   │   │   └── workspace/                 # Workspace creations & invitations
-│   │   ├── repositories/
-│   │   │   └── workspaceRepository.ts     # Workspace DB access wrapper
-│   │   └── types/
-│   │       └── auth.ts                    # Token payloads and interfaces
-│   └── app/                               # VENDOR & TEAM EXTENSION MODULES
-│       ├── api/
-│       │   ├── vendor/                    # Vendor Module Route Handlers
-│       │   │   ├── onboarding/route.ts    # Vendor registration & files uploader
-│       │   │   ├── dashboard/route.ts     # KPI metrics API
-│       │   │   ├── products/route.ts      # Catalog products addition
-│       │   │   └── assignments/[id]/route.ts # Task status update handler
-│       │   ├── projects/[id]/             # Project Team Module API routes [NEW]
-│       │   │   ├── team/route.ts          # GET team members lists
-│       │   │   ├── assign/route.ts        # POST team assignment (Manager only)
-│       │   │   ├── progress/route.ts      # GET/POST completion percentages
-│       │   │   ├── issues/route.ts        # GET/POST logged execution issues
-│       │   │   └── photos/route.ts        # GET/POST proof of installation photos
-│       │   └── webhooks/stripe.ts         # Stripe payment success log webhook
-│       ├── middleware/
-│       │   └── vendorGuard.ts             # REST guard for APPROVED vendors
-│       ├── models/
-│       │   └── projectTeamModel.ts        # Repository query layer for project teams [NEW]
-│       ├── routers/
-│       │   └── projectTeamRouter.ts       # Express router fallback wrapper [NEW]
-│       ├── schemas/vendor/
-│       │   └── onboarding.ts              # Zod validation models
-│       ├── services/
-│       │   ├── vendor/
-│       │   │   └── vendorService.ts       # Core vendor logic & KPIs aggregator
-│       │   └── assignmentService.ts       # Team assignment guards & progress calculator [NEW]
-│       └── utils/
-│           └── authMiddleware.ts          # Role permission mapping guards [NEW]
-│
-├── frontend/
-│   └── src/
-│       ├── app/
-│       │   ├── vendor/                    # VENDOR FRONTEND PAGES
-│       │   │   ├── layout.tsx             # Sidebar layout
-│       │   │   ├── dashboard/page.tsx     # KPI metrics charts page
-│       │   │   ├── onboarding/page.tsx    # Document stepper page
-│       │   │   └── assignments/page.tsx   # Assigned items list page
-│       │   └── projects/[id]/             # PROJECT TEAM FRONTEND PAGES [NEW]
-│       │       ├── team/page.tsx          # Team members directory & assignments builder
-│       │       └── execution/page.tsx     # Construction milestone boards, photos, and Gantt charts
-│       ├── components/
-│       │   ├── AI/                        # AIAssistant.tsx, AIChat.tsx panel bubble layouts
-│       │   ├── Automation/                # AutomationBuilder.tsx, RuleList.tsx wizards
-│       │   ├── Notifications/             # NotificationCenter.tsx drawer
-│       │   ├── Workspace/                 # WorkspaceSwitcher.tsx switcher
-│       │   ├── Views/                     # ListView, BoardView, CalendarView, TimelineView, ChartView
-│       │   └── vendor/                    # Reusable elements (KpiCard, ProjectChart, VendorAssignmentTable, etc.)
-│       │       ├── ExecutionProgressBar.tsx # Styled milestones completion component [NEW]
-│       │       └── IssueTracker.tsx       # Collapsible issues submit form & feed component [NEW]
-│       ├── hooks/
-│       │   └── vendor/
-│       │       └── useVendorAssignments.ts# Assignment synchronizer hook
-│       ├── utils/
-│       │   ├── api/
-│       │   │   └── client.ts              # Global apiClient helper for GET/POST [NEW]
-│       │   └── authMiddleware.ts          # UI page permissions scope checker [NEW]
-│       └── stores/
-│           ├── aiStore.ts                 # Chat queue states
-│           ├── notificationStore.ts       # Client alerts array state
-│           ├── workspaceStore.ts          # Active workspace toggler
-├── package.json                           # Workspace dependency list
-├── tailwind.config.js                     # Extended colors for AI/Automation dashboards
-└── next.config.js                         # Next.js configurations
+InteriorAI_Platform/
+├── assets/                 # Local assets folder (Downloaded transparent furniture PNGs for AI visualization)
+├── backend/                # FastAPI Python Backend (Part 1 source)
+│   ├── .env                # Server configuration & JWT secrets
+│   ├── requirements.txt    # Python package dependencies
+│   ├── pdfs/               # Generated quotation PDFs & uploaded floor plans
+│   └── app/
+│       ├── main.py         # Application entry point & router mounting
+│       ├── db.py           # Database engine & session setup
+│       ├── models.py       # SQLAlchemy database schemas
+│       ├── schemas.py      # Pydantic schemas for serialization
+│       ├── auth_utils.py   # JWT token issuing and authentication dependencies
+│       ├── seed_data.py    # Mock products, design packages, and vendors seeding
+│       └── routers/        # Modular API endpoints (Auth, Projects, Catalog, AI, PDF, etc.)
+└── src/                    # Next.js Frontend Source (app, components, stores, etc.)
+    ├── app/                # App Router pages and client-side view portals
+    │   ├── admin/          # Admin Dashboard
+    │   ├── customize/      # Room Customizer
+    │   ├── dashboard/      # Client Dashboard
+    │   ├── login/          # Phone/Email Login (OTP Auth & Portal Selector)
+    │   ├── onboarding/     # Customer Onboarding Steps
+    │   ├── packages/       # Style Packages Comparison
+    │   ├── projects/       # Project Team Portal ([id]/team, [id]/execution)
+    │   ├── quotation/      # Dynamic Quotation Visualizer
+    │   ├── track/          # Milestone Tracker (Client View)
+    │   ├── vendor/         # Vendor Portal (dashboard, assignments, onboarding)
+    │   ├── visualize/      # AI Room Visualizer canvas
+    │   ├── globals.css     # CSS variable tokens and animation parameters
+    │   └── layout.tsx      # Main layout wrapper
+    ├── components/         # Reusable Component Catalog
+    │   ├── vendor/         # KPI cards, project tables, and issue forms
+    │   ├── BeforeAfterSlider.tsx  # Drag slider comparison component
+    │   ├── BentoGallery.tsx       # Style visualizer responsive bento grid
+    │   ├── BhkSelector.tsx        # Interactive layout planner
+    │   ├── HeroCarousel.tsx       # Slideshow component
+    │   └── Navbar.tsx             # Navbar with state-aware portal switcher
+    ├── lib/                # Configuration and API clients
+    │   └── api.ts          # Axios wrapper mapping to FastAPI routing
+    └── stores/             # Zustand stores
+        ├── authStore.ts           # Customer, Admin, Vendor, Team session state
+        ├── projectStore.ts        # Client visual config, budget updates
+        └── projectTeamStore.ts    # Coordinator monitoring state
 ```
 
 ---
 
-## ⚡ Setup & Execution
+## ⚡ Setup & Execution (Dual Server Setup)
 
-1. **Install Dependencies**:
-   ```bash
-   npm install --legacy-peer-deps
-   ```
+Open two terminal windows to run the frontend and backend servers concurrently.
 
-2. **Generate Database Client**:
-   ```bash
-   npx prisma generate --schema=./backend/prisma/schema.prisma
-   ```
+### 1. Backend Setup (FastAPI)
+```bash
+# Navigate to backend folder
+cd backend
 
-3. **Development Server**:
-   ```bash
-   npm run dev
-   ```
+# Create and activate python virtual environment
+python -m venv .venv
+source .venv/bin/activate       # On Windows: .venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Seed initial database catalogs
+python -m app.seed_data
+
+# Start FastAPI server on port 8000
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+```
+*   **API Documentation**: Access Swagger UI at `http://localhost:8000/docs`.
+
+### 2. Frontend Setup (Next.js)
+```bash
+# Install node packages from the root directory
+npm install
+
+# Start Next.js development server on port 3000
+npm run dev
+```
+*   **Client App**: Access the interface at `http://localhost:3000`.
 
 ---
 
-For compliance audit checksheets, refer to [CHECKLIST.md](file:///c:/Users/VEDANT%20RAJU%20BORKAR/OneDrive/Desktop/mytest/ID%20prompt%20by%20Swayam/CHECKLIST.md).
+## 🔄 Core Application Flow
+
+```mermaid
+graph TD
+    A[User Landing Page] -->|Login/Register| B[BHK & Budget Selection]
+    B -->|AI Recommendation| C[Design Package Selection]
+    C -->|Auto-Generated Rooms| D[Interactive 3D Room Customizer]
+    D -->|Modify Furniture/Colors| E[Real-Time Pricing Updates]
+    D -->|SDXL Job Request| F[AI Photorealistic Visualizer]
+    E -->|Finalize Configuration| G[Dynamic PDF Quote Generator]
+    G -->|Pincode Match| H[Verified Vendor & Execution Tracking]
+```
+
+
+
+
+---
+
+## 🛡️ Security & Environment Settings
+
+The backend configuration is managed via `backend/.env`. In production environments, make sure to change the default values:
+
+```env
+DATABASE_URL=sqlite:///./interior_ai.db
+JWT_SECRET=supersecretjwtkey_change_in_production_2024
+JWT_ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=60
+PDF_OUTPUT_DIR=./pdfs
+STATIC_BASE_URL=http://localhost:8000
+FRONTEND_URL=http://localhost:3000
+```
+
+---
+
+## 📝 License
+Built with ❤️ for Indian homeowners. Distributed under the MIT License. See `LICENSE` for more information.

@@ -1,7 +1,7 @@
-import { prisma } from "../../../src/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import { VendorStatus, AssignmentStatus, PayoutStatus } from "@prisma/client";
 import { z } from "zod";
-import { uploadFile } from "../../../src/lib/storage";
+import { uploadFile } from "@/lib/storage";
 
 // Schemas
 export const VendorOnboardingSchema = z.object({

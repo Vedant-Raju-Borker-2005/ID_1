@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import projectTeamRepo from '../../../../models/projectTeamModel';
-import { verifyAuth } from '../../../../../src/middleware/authMiddleware';
+import projectTeamRepo from '@/app/models/projectTeamModel';
+import { verifyAuth } from '@/middleware/authMiddleware';
 
 export async function GET(
   req: NextRequest,

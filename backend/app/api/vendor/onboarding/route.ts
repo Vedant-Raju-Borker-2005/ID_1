@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { VendorService } from "../../../services/vendor/vendorService";
-import { verifyAuth } from "../../../../src/middleware/authMiddleware";
-import { VendorOnboardingSchema } from "../../../schemas/vendor/onboarding";
+import { VendorService } from "@/app/services/vendor/vendorService";
+import { verifyAuth } from "@/middleware/authMiddleware";
+import { VendorOnboardingSchema } from "@/app/schemas/vendor/onboarding";
 
 export async function POST(req: NextRequest) {
   try {

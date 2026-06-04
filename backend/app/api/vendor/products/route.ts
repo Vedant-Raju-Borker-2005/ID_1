@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { vendorGuard } from "../../../middleware/vendorGuard";
-import { VendorService } from "../../../services/vendor/vendorService";
+import { vendorGuard } from "@/app/middleware/vendorGuard";
+import { VendorService } from "@/app/services/vendor/vendorService";
 
 export async function POST(req: NextRequest) {
   const authResult = await vendorGuard(req);

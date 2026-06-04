@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { VendorService } from "../../../services/vendor/vendorService";
-import { verifyAuth } from "../../../../src/middleware/authMiddleware";
+import { VendorService } from "@/app/services/vendor/vendorService";
+import { verifyAuth } from "@/middleware/authMiddleware";
 
 export async function GET(req: NextRequest) {
   try {

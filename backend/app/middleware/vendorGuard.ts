@@ -1,5 +1,5 @@
-import { prisma } from "../../src/lib/prisma";
-import { verifyAuth } from "../../src/middleware/authMiddleware";
+import { prisma } from "@/lib/prisma";
+import { verifyAuth } from "@/middleware/authMiddleware";
 
 export async function vendorGuard(req: Request) {
   try {

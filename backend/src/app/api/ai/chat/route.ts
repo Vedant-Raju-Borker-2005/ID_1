@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { aiService } from '../../../../services/ai/aiService';
-import { verifyAuth, verifyWorkspaceScoping } from '../../../../middleware/authMiddleware';
+import { aiService } from '@/services/ai/aiService';
+import { verifyAuth, verifyWorkspaceScoping } from '@/middleware/authMiddleware';
 
 export async function POST(request: NextRequest) {
   try {
